@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
     <title>La Cruceta Catracha - Fórmula Oficial</title>
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9481202002076326"
+            crossorigin="anonymous"></script>
+    
     <style>
         * {
             box-sizing: border-box;
@@ -108,8 +113,26 @@
             border-radius: 40px;
             padding: 5px 12px;
             display: flex;
-            gap: 10px;
+            gap: 15px;
             font-size: 13px;
+        }
+        
+        .counter-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .counter-value {
+            background: #22c55e;
+            color: black;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .online-value {
+            background: #38bdf8;
         }
         
         /* Sección fecha */
@@ -236,7 +259,7 @@
             text-overflow: ellipsis;
         }
         
-        /* Publicidad */
+        /* Publicidad con AdSense */
         .ad-container {
             background: #2d3748;
             border-radius: 10px;
@@ -265,7 +288,28 @@
             align-items: center;
         }
         
-        /* Video de YouTube AHORA CON ENLACE REAL */
+        .ad-chat-sidebar {
+            background: #2d3748;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 15px;
+            text-align: center;
+            border: 2px solid #f59e0b;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .ad-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        /* Video */
         .video-box {
             background: #1e293b;
             border-radius: 12px;
@@ -284,7 +328,7 @@
         .video-container {
             position: relative;
             width: 100%;
-            padding-bottom: 56.25%; /* Relación 16:9 para YouTube */
+            padding-bottom: 56.25%;
             background: #0f172a;
             border-radius: 8px;
             overflow: hidden;
@@ -382,7 +426,7 @@
             font-weight: bold;
         }
         
-        /* Diccionario de sueños COMPLETO */
+        /* Diccionario de sueños */
         .dream-box {
             background: #1e293b;
             border-radius: 12px;
@@ -793,11 +837,6 @@
             font-size: 14px;
         }
         
-        .message-input input:focus {
-            outline: none;
-            border-color: #22c55e;
-        }
-        
         .message-input button {
             padding: 12px 20px;
             border-radius: 30px;
@@ -857,21 +896,6 @@
             background: #e2e8f0;
         }
         
-        /* Publicidad adicional */
-        .ad-chat-sidebar {
-            background: #2d3748;
-            border-radius: 10px;
-            padding: 10px;
-            margin-top: 15px;
-            text-align: center;
-            border: 2px solid #f59e0b;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        
         .dream-result {
             margin-top: 10px;
             padding: 10px;
@@ -906,7 +930,7 @@
     <div class="container">
         <!-- Columna principal -->
         <div class="main-content">
-            <!-- Header -->
+            <!-- Header con contadores REALES -->
             <div class="header">
                 <div>
                     <h1 style="font-size: 28px;">🎰 La Cruceta Catracha</h1>
@@ -922,16 +946,27 @@
                         <button onclick="changeFontSize(1)">A+</button>
                     </div>
                     <div class="counter-box">
-                        <span>📊 <span id="total-visitas">158k</span></span>
-                        <span>🟢 <span id="online-visitas">1.2k</span></span>
+                        <div class="counter-item">
+                            <span>📊</span>
+                            <span class="counter-value" id="total-visitas">0</span>
+                        </div>
+                        <div class="counter-item">
+                            <span>🟢</span>
+                            <span class="counter-value online-value" id="online-visitas">0</span>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Publicidad superior -->
+            <!-- Publicidad superior con AdSense -->
             <div class="ad-container">
                 <div class="ad-label">PUBLICIDAD</div>
-                <div class="ad-content">📢 Espacio PropellerAds 728x90</div>
+                <!-- AdSense 728x90 -->
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:728px;height:90px"
+                     data-ad-client="ca-pub-9481202002076326"
+                     data-ad-slot="1234567890"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
             </div>
             
             <!-- Sección fecha y sueños -->
@@ -958,15 +993,12 @@
                 <div class="ranking-grid" id="ranking-grid"></div>
             </div>
             
-            <!-- Video de YouTube con el enlace proporcionado -->
+            <!-- Video de YouTube -->
             <div class="video-box">
                 <div class="video-title">▶️ ¿Cómo Funciona? mirá el video</div>
                 <div class="video-container">
                     <iframe src="https://www.youtube.com/embed/V3LYt26UZcY" title="Cómo funciona La Cruceta Catracha" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; margin-top: 5px; text-align: center;">
-                    Tutorial completo: Cómo usar La Cruceta Catracha
-                </p>
             </div>
             
             <!-- Números recomendados -->
@@ -978,11 +1010,11 @@
                 <div id="metodo2"></div>
             </div>
             
-            <!-- ===== CHAT ===== -->
+            <!-- ===== CHAT CON CONTADOR REAL ===== -->
             <div class="chat-container">
                 <div class="chat-header">
                     <span class="chat-title">💬 Chatea en vivo</span>
-                    <span class="online-users" id="online-count">0 conectados</span>
+                    <span class="online-users" id="chat-online-count">0 conectados</span>
                 </div>
                 
                 <!-- BOTÓN DE ESTILO -->
@@ -1033,9 +1065,7 @@
                     </button>
                 </div>
                 
-                <div class="chat-messages" id="chat-messages">
-                    <!-- Los mensajes aparecerán aquí -->
-                </div>
+                <div class="chat-messages" id="chat-messages"></div>
                 
                 <div class="chat-input-area">
                     <div id="replyIndicator" class="reply-indicator" style="display: none;">
@@ -1065,10 +1095,15 @@
         
         <!-- Barra lateral -->
         <div class="chat-sidebar">
-            <!-- Publicidad lateral -->
+            <!-- Publicidad lateral con AdSense -->
             <div class="ad-sidebar">
                 <div class="ad-label">PUBLICIDAD</div>
-                <div class="ad-content">📢 Banner 300x250</div>
+                <!-- AdSense 300x250 -->
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:300px;height:250px"
+                     data-ad-client="ca-pub-9481202002076326"
+                     data-ad-slot="2345678901"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
             </div>
             
             <!-- Calendario -->
@@ -1097,10 +1132,15 @@
                 <div class="dream-list" id="dreamList"></div>
             </div>
             
-            <!-- Publicidad adicional -->
+            <!-- Publicidad adicional con AdSense -->
             <div class="ad-chat-sidebar">
                 <div class="ad-label">PUBLICIDAD</div>
-                <div class="ad-content">📢 Banner 300x100</div>
+                <!-- AdSense 300x100 -->
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:300px;height:100px"
+                     data-ad-client="ca-pub-9481202002076326"
+                     data-ad-slot="3456789012"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
             </div>
             
             <!-- Donación -->
@@ -1127,6 +1167,60 @@
         let replyTo = null;
         let fontSize = 100;
         let emojiPickerVisible = false;
+        
+        // ==============================================
+        // CONTADORES REALES DE VISITANTES
+        // ==============================================
+        
+        // Generar ID único para esta sesión
+        const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        let isActive = true;
+        
+        // Función para actualizar contadores
+        function updateCounters() {
+            // Obtener o inicializar contadores en localStorage
+            let totalVisits = localStorage.getItem('totalVisits') || '0';
+            let activeSessions = JSON.parse(localStorage.getItem('activeSessions') || '{}');
+            
+            // Limpiar sesiones inactivas (más de 5 minutos)
+            const now = Date.now();
+            const inactiveThreshold = 5 * 60 * 1000; // 5 minutos
+            
+            // Registrar esta sesión
+            activeSessions[sessionId] = now;
+            
+            // Limpiar sesiones antiguas
+            for (let id in activeSessions) {
+                if (now - activeSessions[id] > inactiveThreshold) {
+                    delete activeSessions[id];
+                }
+            }
+            
+            // Guardar sesiones activas
+            localStorage.setItem('activeSessions', JSON.stringify(activeSessions));
+            
+            // Incrementar contador total si es nueva visita
+            if (!localStorage.getItem('visited_' + sessionId)) {
+                totalVisits = (parseInt(totalVisits) + 1).toString();
+                localStorage.setItem('totalVisits', totalVisits);
+                localStorage.setItem('visited_' + sessionId, 'true');
+            }
+            
+            // Actualizar UI
+            document.getElementById('total-visitas').textContent = totalVisits;
+            document.getElementById('online-visitas').textContent = Object.keys(activeSessions).length;
+            document.getElementById('chat-online-count').textContent = `🎲 ${Object.keys(activeSessions).length} conectados`;
+        }
+        
+        // Actualizar cada 30 segundos
+        setInterval(updateCounters, 30000);
+        
+        // Al cerrar la pestaña, marcar como inactiva
+        window.addEventListener('beforeunload', function() {
+            let activeSessions = JSON.parse(localStorage.getItem('activeSessions') || '{}');
+            delete activeSessions[sessionId];
+            localStorage.setItem('activeSessions', JSON.stringify(activeSessions));
+        });
         
         // ==============================================
         // DICCIONARIO DE SUEÑOS COMPLETO (00 al 99)
@@ -1331,7 +1425,6 @@
             const dreamList = document.getElementById('dreamList');
             dreamList.innerHTML = '';
             
-            // Mostrar todos los números del 00 al 99
             for (let i = 0; i <= 99; i++) {
                 const num = i.toString().padStart(2, '0');
                 const entry = dreamDictionary[i];
@@ -1371,7 +1464,7 @@
         }
         
         // ==============================================
-        // CHAT CON RESPUESTAS CORREGIDAS
+        // CHAT
         // ==============================================
         function displayMessage(msg, isOwn = false) {
             const chatMessages = document.getElementById('chat-messages');
@@ -1383,14 +1476,12 @@
             let content = msg.text;
             let replyHtml = '';
             
-            // Si es una respuesta, mostrar el mensaje original
             if (msg.replyTo) {
                 replyHtml = `<div style="background: rgba(0,0,0,0.1); padding: 5px; border-radius: 5px; margin-bottom: 5px; font-size: 11px; border-left: 3px solid #fbbf24;">
                     Respondiendo a ${msg.replyTo.username}: "${msg.replyTo.text.substring(0, 30)}..."
                 </div>`;
             }
             
-            // Procesar menciones
             if (content.includes('@')) {
                 content = content.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
                 if (currentUsername && content.includes(`@${currentUsername}`)) {
@@ -1412,10 +1503,6 @@
             
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            if (chatMessages.children.length > 100) {
-                chatMessages.removeChild(chatMessages.children[0]);
-            }
         }
         
         function escapeHtml(text) {
@@ -1454,7 +1541,6 @@
                 return;
             }
             
-            // Crear objeto de mensaje con respuesta si existe
             const messageObj = { 
                 username: currentUsername, 
                 text: msg 
@@ -1466,10 +1552,9 @@
             
             displayMessage(messageObj, true);
             input.value = '';
-            cancelReply(); // Limpiar respuesta después de enviar
+            cancelReply();
         }
         
-        // Enviar con Enter
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 const messageInput = document.getElementById('message');
@@ -1483,7 +1568,6 @@
             }
         });
         
-        // Función de respuesta CORREGIDA
         function replyToMessage(username, text) {
             replyTo = { 
                 username: username, 
@@ -1495,8 +1579,6 @@
             
             replyText.textContent = `${username}: ${text.substring(0, 40)}...`;
             replyIndicator.style.display = 'block';
-            
-            // Enfocar el input de mensaje
             document.getElementById('message').focus();
         }
         
@@ -1699,6 +1781,7 @@
             setTodayDate();
             initDreamList();
             updateCalendar();
+            updateCounters(); // Inicializar contadores
             
             // Mensajes de bienvenida
             setTimeout(() => {
@@ -1707,13 +1790,6 @@
             }, 500);
             
             calcular();
-            
-            // Simular contadores
-            setInterval(() => {
-                document.getElementById('online-count').textContent = `🎲 ${Math.floor(Math.random() * 20) + 8} conectados`;
-                document.getElementById('online-visitas').textContent = Math.floor(Math.random() * 300) + 900;
-                document.getElementById('total-visitas').textContent = (Math.floor(Math.random() * 10) + 155) + 'k';
-            }, 10000);
             
             // Ranking
             document.getElementById('ranking-grid').innerHTML = `
