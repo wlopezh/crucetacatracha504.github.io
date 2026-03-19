@@ -9,6 +9,9 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9481202002076326"
             crossorigin="anonymous"></script>
     
+    <!-- Parse SDK (Back4App) -->
+    <script src="https://npmcdn.com/parse@3.4.2/dist/parse.min.js"></script>
+    
     <style>
         * {
             box-sizing: border-box;
@@ -259,7 +262,7 @@
             text-overflow: ellipsis;
         }
         
-        /* Publicidad con AdSense */
+        /* Publicidad */
         .ad-container {
             background: #2d3748;
             border-radius: 10px;
@@ -697,7 +700,7 @@
         }
         
         .chat-messages {
-            height: 250px;
+            height: 300px;
             overflow-y: auto;
             padding: 15px;
             display: flex;
@@ -961,7 +964,6 @@
             <!-- Publicidad superior con AdSense -->
             <div class="ad-container">
                 <div class="ad-label">PUBLICIDAD</div>
-                <!-- AdSense 728x90 -->
                 <ins class="adsbygoogle"
                      style="display:inline-block;width:728px;height:90px"
                      data-ad-client="ca-pub-9481202002076326"
@@ -1010,7 +1012,7 @@
                 <div id="metodo2"></div>
             </div>
             
-            <!-- ===== CHAT CON CONTADOR REAL ===== -->
+            <!-- ===== CHAT CON DATOS REALES ===== -->
             <div class="chat-container">
                 <div class="chat-header">
                     <span class="chat-title">💬 Chatea en vivo</span>
@@ -1098,7 +1100,6 @@
             <!-- Publicidad lateral con AdSense -->
             <div class="ad-sidebar">
                 <div class="ad-label">PUBLICIDAD</div>
-                <!-- AdSense 300x250 -->
                 <ins class="adsbygoogle"
                      style="display:inline-block;width:300px;height:250px"
                      data-ad-client="ca-pub-9481202002076326"
@@ -1135,7 +1136,6 @@
             <!-- Publicidad adicional con AdSense -->
             <div class="ad-chat-sidebar">
                 <div class="ad-label">PUBLICIDAD</div>
-                <!-- AdSense 300x100 -->
                 <ins class="adsbygoogle"
                      style="display:inline-block;width:300px;height:100px"
                      data-ad-client="ca-pub-9481202002076326"
@@ -1150,7 +1150,7 @@
                     • Si deseas realizar una pequeña donación para el mantenimiento de esta página, y seguirla mejorando puedes hacerlo a la cuenta de Banco Davivienda:
                 </div>
                 <div class="donation-account">
-                    # 1781117738
+                    # 123-456789-00
                 </div>
                 <div class="donation-email">
                     📧 crucetacatracha504@gmail.com
@@ -1161,70 +1161,442 @@
     
     <script>
         // ==============================================
-        // CONFIGURACIÓN Y VARIABLES
+        // CONFIGURACIÓN DE BACK4APP - ¡TUS DATOS!
+        // ==============================================
+        
+        const applicationId = "TwW6r8plaozSbPHZ5qMywFOsMdM2FrRsH0uilBxX";
+        const javascriptKey = "BH0THtPGHpNICMa0oguz8eeXHhpI0OAE2fIYvq25";
+        const serverURL = "https://parseapi.back4app.com";
+
+        // Inicializar Parse
+        Parse.initialize(applicationId, javascriptKey);
+        Parse.serverURL = serverURL;
+        
+        // ==============================================
+        // VARIABLES GLOBALES
         // ==============================================
         let currentUsername = '';
         let replyTo = null;
         let fontSize = 100;
         let emojiPickerVisible = false;
+        let currentUserId = null;
+        let lastMessageTime = 0;
         
         // ==============================================
-        // CONTADORES REALES DE VISITANTES
+        // CONTADORES REALES CON BACK4APP
         // ==============================================
         
         // Generar ID único para esta sesión
-        const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        let isActive = true;
+        currentUserId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         
-        // Función para actualizar contadores
-        function updateCounters() {
-            // Obtener o inicializar contadores en localStorage
-            let totalVisits = localStorage.getItem('totalVisits') || '0';
-            let activeSessions = JSON.parse(localStorage.getItem('activeSessions') || '{}');
+        // Referencias a las clases de Parse
+        const Visitas = Parse.Object.extend("Visitas");
+        const UsuariosActivos = Parse.Object.extend("UsuariosActivos");
+        const Mensajes = Parse.Object.extend("Mensajes");
+        
+        // Obtener y actualizar visitas totales
+        async function actualizarVisitas() {
+            const query = new Parse.Query(Visitas);
+            try {
+                let visitas = await query.first();
+                if (!visitas) {
+                    visitas = new Visitas();
+                    visitas.set("total", 0);
+                    await visitas.save();
+                }
+                
+                // Verificar si es nueva visita
+                if (!sessionStorage.getItem('visitCounted')) {
+                    visitas.increment("total");
+                    await visitas.save();
+                    sessionStorage.setItem('visitCounted', 'true');
+                }
+                
+                document.getElementById('total-visitas').textContent = visitas.get("total");
+            } catch (error) {
+                console.error("Error con visitas:", error);
+            }
+        }
+        
+        // Gestionar usuarios activos
+        async function actualizarUsuarioActivo() {
+            const query = new Parse.Query(UsuariosActivos);
+            query.equalTo("userId", currentUserId);
             
-            // Limpiar sesiones inactivas (más de 5 minutos)
-            const now = Date.now();
-            const inactiveThreshold = 5 * 60 * 1000; // 5 minutos
+            try {
+                let usuario = await query.first();
+                if (!usuario) {
+                    usuario = new UsuariosActivos();
+                    usuario.set("userId", currentUserId);
+                    usuario.set("username", currentUsername || 'Anónimo');
+                }
+                usuario.set("lastSeen", Date.now());
+                await usuario.save();
+                
+                // Contar usuarios activos (últimos 5 minutos)
+                const ahora = Date.now();
+                const tiempoLimite = 5 * 60 * 1000;
+                
+                const todosQuery = new Parse.Query(UsuariosActivos);
+                const todos = await todosQuery.find();
+                
+                let activos = 0;
+                for (let u of todos) {
+                    if (ahora - u.get("lastSeen") < tiempoLimite) {
+                        activos++;
+                    }
+                }
+                
+                document.getElementById('online-visitas').textContent = activos;
+                document.getElementById('chat-online-count').textContent = `🎲 ${activos} conectados`;
+            } catch (error) {
+                console.error("Error con usuarios:", error);
+            }
+        }
+        
+        // Limpiar usuarios inactivos
+        async function limpiarInactivos() {
+            const ahora = Date.now();
+            const tiempoLimite = 5 * 60 * 1000;
             
-            // Registrar esta sesión
-            activeSessions[sessionId] = now;
+            const query = new Parse.Query(UsuariosActivos);
+            const todos = await query.find();
             
-            // Limpiar sesiones antiguas
-            for (let id in activeSessions) {
-                if (now - activeSessions[id] > inactiveThreshold) {
-                    delete activeSessions[id];
+            for (let usuario of todos) {
+                if (ahora - usuario.get("lastSeen") > tiempoLimite) {
+                    await usuario.destroy();
+                }
+            }
+        }
+        
+        // Al cerrar, eliminar este usuario
+        window.addEventListener('beforeunload', function() {
+            const query = new Parse.Query(UsuariosActivos);
+            query.equalTo("userId", currentUserId);
+            query.first().then(usuario => {
+                if (usuario) usuario.destroy();
+            });
+        });
+        
+        // Actualizar cada 30 segundos
+        setInterval(() => {
+            actualizarUsuarioActivo();
+            limpiarInactivos();
+        }, 30000);
+        
+        // ==============================================
+        // CHAT EN VIVO CON BACK4APP
+        // ==============================================
+        
+        // Cargar mensajes anteriores
+        async function cargarMensajes() {
+            const query = new Parse.Query(Mensajes);
+            query.descending("timestamp");
+            query.limit(50);
+            
+            try {
+                const resultados = await query.find();
+                for (let i = resultados.length - 1; i >= 0; i--) {
+                    const msg = resultados[i];
+                    const esMio = msg.get("userId") === currentUserId;
+                    mostrarMensajeLocal({
+                        username: msg.get("username"),
+                        text: msg.get("texto"),
+                        timestamp: msg.get("timestamp"),
+                        replyTo: msg.get("replyToUsername") ? {
+                            username: msg.get("replyToUsername"),
+                            text: msg.get("replyToText")
+                        } : null
+                    }, esMio);
+                }
+            } catch (error) {
+                console.error("Error cargando mensajes:", error);
+            }
+        }
+        
+        // Escuchar nuevos mensajes (polling cada 2 segundos)
+        let ultimoTimestamp = Date.now();
+        async function escucharMensajes() {
+            const query = new Parse.Query(Mensajes);
+            query.greaterThan("timestamp", ultimoTimestamp);
+            
+            try {
+                const nuevos = await query.find();
+                for (let msg of nuevos) {
+                    const esMio = msg.get("userId") === currentUserId;
+                    mostrarMensajeLocal({
+                        username: msg.get("username"),
+                        text: msg.get("texto"),
+                        timestamp: msg.get("timestamp"),
+                        replyTo: msg.get("replyToUsername") ? {
+                            username: msg.get("replyToUsername"),
+                            text: msg.get("replyToText")
+                        } : null
+                    }, esMio);
+                    
+                    if (msg.get("timestamp") > ultimoTimestamp) {
+                        ultimoTimestamp = msg.get("timestamp");
+                    }
+                }
+            } catch (error) {
+                console.error("Error escuchando mensajes:", error);
+            }
+        }
+        
+        setInterval(escucharMensajes, 2000);
+        
+        function mostrarMensajeLocal(msg, esMio) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${esMio ? 'message-own' : ''}`;
+            
+            const time = new Date(msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            
+            let content = msg.text;
+            let replyHtml = '';
+            
+            if (msg.replyTo) {
+                replyHtml = `<div style="background: rgba(0,0,0,0.1); padding: 5px; border-radius: 5px; margin-bottom: 5px; font-size: 11px; border-left: 3px solid #fbbf24;">
+                    Respondiendo a ${msg.replyTo.username}: "${msg.replyTo.text.substring(0, 30)}..."
+                </div>`;
+            }
+            
+            if (content.includes('@')) {
+                content = content.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+                if (currentUsername && content.includes(`@${currentUsername}`)) {
+                    alert('🔔 Te mencionaron en el chat');
                 }
             }
             
-            // Guardar sesiones activas
-            localStorage.setItem('activeSessions', JSON.stringify(activeSessions));
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="message-user">${escapeHtml(msg.username)}</span>
+                    <span class="message-time">${time}</span>
+                </div>
+                ${replyHtml}
+                <div class="message-content">${content}</div>
+                <div class="message-actions">
+                    <span onclick="replyToMessage('${msg.username}', '${escapeHtml(msg.text.replace(/'/g, "\\'"))}')">↩️ Responder</span>
+                </div>
+            `;
             
-            // Incrementar contador total si es nueva visita
-            if (!localStorage.getItem('visited_' + sessionId)) {
-                totalVisits = (parseInt(totalVisits) + 1).toString();
-                localStorage.setItem('totalVisits', totalVisits);
-                localStorage.setItem('visited_' + sessionId, 'true');
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            if (chatMessages.children.length > 100) {
+                chatMessages.removeChild(chatMessages.children[0]);
             }
-            
-            // Actualizar UI
-            document.getElementById('total-visitas').textContent = totalVisits;
-            document.getElementById('online-visitas').textContent = Object.keys(activeSessions).length;
-            document.getElementById('chat-online-count').textContent = `🎲 ${Object.keys(activeSessions).length} conectados`;
         }
         
-        // Actualizar cada 30 segundos
-        setInterval(updateCounters, 30000);
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
         
-        // Al cerrar la pestaña, marcar como inactiva
-        window.addEventListener('beforeunload', function() {
-            let activeSessions = JSON.parse(localStorage.getItem('activeSessions') || '{}');
-            delete activeSessions[sessionId];
-            localStorage.setItem('activeSessions', JSON.stringify(activeSessions));
+        async function setUsername() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                alert('Ingresa un nombre');
+                return;
+            }
+            
+            if (username.length > 20) {
+                alert('El nombre no puede exceder 20 caracteres');
+                return;
+            }
+            
+            currentUsername = username;
+            
+            // Actualizar nombre en usuarios activos
+            const query = new Parse.Query(UsuariosActivos);
+            query.equalTo("userId", currentUserId);
+            const usuario = await query.first();
+            if (usuario) {
+                usuario.set("username", currentUsername);
+                await usuario.save();
+            }
+            
+            document.getElementById('username-container').style.display = 'none';
+            document.getElementById('message-container').style.display = 'flex';
+            
+            // Mensaje de bienvenida
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
+            msgDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="message-user">🤖 Sistema</span>
+                    <span class="message-time">${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div class="message-content">✨ ¡Bienvenido ${username}!</div>
+            `;
+            document.getElementById('chat-messages').appendChild(msgDiv);
+            
+            // Cargar mensajes anteriores
+            cargarMensajes();
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('message');
+            const msg = input.value.trim();
+            
+            if (!msg || !currentUsername) return;
+            
+            if (msg.length > 100) {
+                alert('El mensaje no puede exceder 100 caracteres');
+                return;
+            }
+            
+            const ahora = Date.now();
+            if (ahora - lastMessageTime < 1000) {
+                alert('Por favor espera un segundo antes de enviar otro mensaje');
+                return;
+            }
+            lastMessageTime = ahora;
+            
+            // Guardar en Back4App
+            const mensaje = new Mensajes();
+            mensaje.set("username", currentUsername);
+            mensaje.set("userId", currentUserId);
+            mensaje.set("texto", msg);
+            mensaje.set("timestamp", ahora);
+            
+            if (replyTo) {
+                mensaje.set("replyToUsername", replyTo.username);
+                mensaje.set("replyToText", replyTo.text);
+            }
+            
+            try {
+                await mensaje.save();
+                input.value = '';
+                cancelReply();
+            } catch (error) {
+                console.error("Error enviando mensaje:", error);
+                alert("Error al enviar mensaje");
+            }
+        }
+        
+        // Enviar con Enter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const messageInput = document.getElementById('message');
+                const usernameInput = document.getElementById('username');
+                
+                if (messageInput && document.getElementById('message-container').style.display === 'flex' && messageInput.value.trim()) {
+                    sendMessage();
+                } else if (usernameInput && document.getElementById('username-container').style.display === 'flex' && usernameInput.value.trim()) {
+                    setUsername();
+                }
+            }
         });
         
+        function replyToMessage(username, text) {
+            replyTo = { 
+                username: username, 
+                text: text 
+            };
+            
+            const replyIndicator = document.getElementById('replyIndicator');
+            const replyText = document.getElementById('replyText');
+            
+            replyText.textContent = `${username}: ${text.substring(0, 40)}...`;
+            replyIndicator.style.display = 'block';
+            document.getElementById('message').focus();
+        }
+        
+        function cancelReply() {
+            replyTo = null;
+            document.getElementById('replyIndicator').style.display = 'none';
+        }
+        
         // ==============================================
-        // DICCIONARIO DE SUEÑOS COMPLETO (00 al 99)
+        // RESTO DE FUNCIONES
         // ==============================================
+        function toggleMode() {
+            document.body.classList.toggle('light-mode');
+        }
+        
+        function changeFontSize(delta) {
+            fontSize = Math.min(150, Math.max(80, fontSize + delta * 10));
+            document.body.style.fontSize = fontSize + '%';
+            document.getElementById('font-size-indicator').textContent = fontSize + '%';
+        }
+        
+        function setTodayDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('fecha').value = `${year}-${month}-${day}`;
+        }
+        
+        function toggleChatStyleMenu() {
+            const menu = document.getElementById('chatStyleMenu');
+            menu.classList.toggle('show');
+        }
+        
+        function applyChatStyle() {
+            const fontFamily = document.getElementById('fontFamily').value;
+            const fontSize = document.getElementById('fontSize').value;
+            const textColor = document.getElementById('textColor').value;
+            const ownBg = document.getElementById('ownMessageBg').value;
+            const otherBg = document.getElementById('otherMessageBg').value;
+            
+            document.getElementById('fontSizeValue').textContent = fontSize + 'px';
+            
+            const oldStyle = document.getElementById('chatCustomStyle');
+            if (oldStyle) oldStyle.remove();
+            
+            const style = document.createElement('style');
+            style.id = 'chatCustomStyle';
+            style.textContent = `
+                .chat-messages .message,
+                .chat-messages .message-own,
+                .chat-messages .message-content {
+                    font-family: ${fontFamily} !important;
+                    font-size: ${fontSize}px !important;
+                }
+                .chat-messages .message {
+                    background: ${otherBg} !important;
+                    color: ${textColor} !important;
+                }
+                .chat-messages .message-own {
+                    background: ${ownBg} !important;
+                    color: ${textColor} !important;
+                }
+                .chat-messages .message-content {
+                    color: ${textColor} !important;
+                }
+            `;
+            
+            document.head.appendChild(style);
+        }
+        
+        function resetChatStyle() {
+            const oldStyle = document.getElementById('chatCustomStyle');
+            if (oldStyle) oldStyle.remove();
+            
+            document.getElementById('fontFamily').value = 'Arial, sans-serif';
+            document.getElementById('fontSize').value = '13';
+            document.getElementById('fontSizeValue').textContent = '13px';
+            document.getElementById('textColor').value = '#000000';
+            document.getElementById('ownMessageBg').value = '#bbf7d0';
+            document.getElementById('otherMessageBg').value = '#bae6fd';
+        }
+        
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('chatStyleMenu');
+            const button = document.querySelector('.chat-style-button');
+            
+            if (menu && menu.classList.contains('show') && 
+                !menu.contains(e.target) && 
+                button && !button.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+        
+        // Diccionario de sueños (completo)
         const dreamDictionary = [
             { dream: 'avión, volar, aeropuerto', number: '00' },
             { dream: 'sol, día, luz, brillo', number: '01' },
@@ -1328,99 +1700,6 @@
             { dream: 'infinito, eternidad, inmortalidad', number: '99' }
         ];
         
-        // ==============================================
-        // FUNCIONES BÁSICAS
-        // ==============================================
-        function toggleMode() {
-            document.body.classList.toggle('light-mode');
-        }
-        
-        function changeFontSize(delta) {
-            fontSize = Math.min(150, Math.max(80, fontSize + delta * 10));
-            document.body.style.fontSize = fontSize + '%';
-            document.getElementById('font-size-indicator').textContent = fontSize + '%';
-        }
-        
-        function setTodayDate() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            document.getElementById('fecha').value = `${year}-${month}-${day}`;
-        }
-        
-        // ==============================================
-        // MENÚ DE ESTILOS DEL CHAT
-        // ==============================================
-        function toggleChatStyleMenu() {
-            const menu = document.getElementById('chatStyleMenu');
-            menu.classList.toggle('show');
-        }
-        
-        function applyChatStyle() {
-            const fontFamily = document.getElementById('fontFamily').value;
-            const fontSize = document.getElementById('fontSize').value;
-            const textColor = document.getElementById('textColor').value;
-            const ownBg = document.getElementById('ownMessageBg').value;
-            const otherBg = document.getElementById('otherMessageBg').value;
-            
-            document.getElementById('fontSizeValue').textContent = fontSize + 'px';
-            
-            const oldStyle = document.getElementById('chatCustomStyle');
-            if (oldStyle) oldStyle.remove();
-            
-            const style = document.createElement('style');
-            style.id = 'chatCustomStyle';
-            style.textContent = `
-                .chat-messages .message,
-                .chat-messages .message-own,
-                .chat-messages .message-content {
-                    font-family: ${fontFamily} !important;
-                    font-size: ${fontSize}px !important;
-                }
-                .chat-messages .message {
-                    background: ${otherBg} !important;
-                    color: ${textColor} !important;
-                }
-                .chat-messages .message-own {
-                    background: ${ownBg} !important;
-                    color: ${textColor} !important;
-                }
-                .chat-messages .message-content {
-                    color: ${textColor} !important;
-                }
-            `;
-            
-            document.head.appendChild(style);
-        }
-        
-        function resetChatStyle() {
-            const oldStyle = document.getElementById('chatCustomStyle');
-            if (oldStyle) oldStyle.remove();
-            
-            document.getElementById('fontFamily').value = 'Arial, sans-serif';
-            document.getElementById('fontSize').value = '13';
-            document.getElementById('fontSizeValue').textContent = '13px';
-            document.getElementById('textColor').value = '#000000';
-            document.getElementById('ownMessageBg').value = '#bbf7d0';
-            document.getElementById('otherMessageBg').value = '#bae6fd';
-        }
-        
-        // Cerrar menú al hacer clic fuera
-        document.addEventListener('click', function(e) {
-            const menu = document.getElementById('chatStyleMenu');
-            const button = document.querySelector('.chat-style-button');
-            
-            if (menu && menu.classList.contains('show') && 
-                !menu.contains(e.target) && 
-                button && !button.contains(e.target)) {
-                menu.classList.remove('show');
-            }
-        });
-        
-        // ==============================================
-        // DICCIONARIO DE SUEÑOS
-        // ==============================================
         function initDreamList() {
             const dreamList = document.getElementById('dreamList');
             dreamList.innerHTML = '';
@@ -1463,130 +1742,6 @@
             }
         }
         
-        // ==============================================
-        // CHAT
-        // ==============================================
-        function displayMessage(msg, isOwn = false) {
-            const chatMessages = document.getElementById('chat-messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isOwn ? 'message-own' : ''}`;
-            
-            const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            
-            let content = msg.text;
-            let replyHtml = '';
-            
-            if (msg.replyTo) {
-                replyHtml = `<div style="background: rgba(0,0,0,0.1); padding: 5px; border-radius: 5px; margin-bottom: 5px; font-size: 11px; border-left: 3px solid #fbbf24;">
-                    Respondiendo a ${msg.replyTo.username}: "${msg.replyTo.text.substring(0, 30)}..."
-                </div>`;
-            }
-            
-            if (content.includes('@')) {
-                content = content.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
-                if (currentUsername && content.includes(`@${currentUsername}`)) {
-                    alert('🔔 Te mencionaron en el chat');
-                }
-            }
-            
-            messageDiv.innerHTML = `
-                <div class="message-header">
-                    <span class="message-user">${escapeHtml(msg.username)}</span>
-                    <span class="message-time">${time}</span>
-                </div>
-                ${replyHtml}
-                <div class="message-content">${content}</div>
-                <div class="message-actions">
-                    <span onclick="replyToMessage('${msg.username}', '${escapeHtml(msg.text.replace(/'/g, "\\'"))}')">↩️ Responder</span>
-                </div>
-            `;
-            
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        function setUsername() {
-            const username = document.getElementById('username').value.trim();
-            if (!username) {
-                alert('Ingresa un nombre');
-                return;
-            }
-            
-            if (username.length > 20) {
-                alert('El nombre no puede exceder 20 caracteres');
-                return;
-            }
-            
-            currentUsername = username;
-            document.getElementById('username-container').style.display = 'none';
-            document.getElementById('message-container').style.display = 'flex';
-            
-            displayMessage({ username: '🤖 Sistema', text: `✨ ¡Bienvenido ${username}!` });
-        }
-        
-        function sendMessage() {
-            const input = document.getElementById('message');
-            const msg = input.value.trim();
-            
-            if (!msg || !currentUsername) return;
-            
-            if (msg.length > 100) {
-                alert('El mensaje no puede exceder 100 caracteres');
-                return;
-            }
-            
-            const messageObj = { 
-                username: currentUsername, 
-                text: msg 
-            };
-            
-            if (replyTo) {
-                messageObj.replyTo = replyTo;
-            }
-            
-            displayMessage(messageObj, true);
-            input.value = '';
-            cancelReply();
-        }
-        
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const messageInput = document.getElementById('message');
-                const usernameInput = document.getElementById('username');
-                
-                if (messageInput && document.getElementById('message-container').style.display === 'flex' && messageInput.value.trim()) {
-                    sendMessage();
-                } else if (usernameInput && document.getElementById('username-container').style.display === 'flex' && usernameInput.value.trim()) {
-                    setUsername();
-                }
-            }
-        });
-        
-        function replyToMessage(username, text) {
-            replyTo = { 
-                username: username, 
-                text: text 
-            };
-            
-            const replyIndicator = document.getElementById('replyIndicator');
-            const replyText = document.getElementById('replyText');
-            
-            replyText.textContent = `${username}: ${text.substring(0, 40)}...`;
-            replyIndicator.style.display = 'block';
-            document.getElementById('message').focus();
-        }
-        
-        function cancelReply() {
-            replyTo = null;
-            document.getElementById('replyIndicator').style.display = 'none';
-        }
-        
         function toggleEmojiPicker() {
             const picker = document.getElementById('emoji-picker');
             
@@ -1612,9 +1767,6 @@
             }
         }
         
-        // ==============================================
-        // CALENDARIO
-        // ==============================================
         function updateCalendar() {
             const calendar = document.getElementById('calendarMini');
             const winDays = [3, 7, 12, 15, 18, 22, 25, 28];
@@ -1626,9 +1778,6 @@
             calendar.innerHTML = html;
         }
         
-        // ==============================================
-        // CRUCETA
-        // ==============================================
         function sumaDigitos(num) {
             let res = "";
             for (let i = 0; i < num.length - 1; i++) {
@@ -1781,13 +1930,21 @@
             setTodayDate();
             initDreamList();
             updateCalendar();
-            updateCounters(); // Inicializar contadores
+            actualizarVisitas();
+            actualizarUsuarioActivo();
             
-            // Mensajes de bienvenida
-            setTimeout(() => {
-                displayMessage({ username: '🤖 Sistema', text: '🎲 ¡Bienvenido a La Cruceta Catracha!' });
-                displayMessage({ username: '📢 Admin', text: '💬 Usa @ para mencionar a alguien' });
-            }, 500);
+            // Mensaje de bienvenida
+            const chatMessages = document.getElementById('chat-messages');
+            const welcomeDiv = document.createElement('div');
+            welcomeDiv.className = 'message';
+            welcomeDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="message-user">🤖 Sistema</span>
+                    <span class="message-time">${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div class="message-content">🎲 ¡Bienvenido a La Cruceta Catracha!</div>
+            `;
+            chatMessages.appendChild(welcomeDiv);
             
             calcular();
             
